@@ -1,0 +1,45 @@
+name: Build signed APK
+
+on:
+  workflow_dispatch: {}
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Build, sign and checksum
+        env:
+          LIANLEME_KS: ${{ secrets.LIANLEME_KS }}
+        run: bash .github/scripts/ci-build.sh
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.APP_VERSION }}
+          name: 练了么 v${{ env.APP_VERSION }}
+          body: |
+            「练了么」自动构建——openGym (AGPL-3.0) 的中文 fork，
+            基于本仓库 main 分支，独立签名密钥。
+            请勿在官方 openGym 版本上直接覆盖安装（签名不同，需先卸载）。
+          files: |
+            lianleme.apk
+            lianleme.apk.sha256
+          make_latest: true
