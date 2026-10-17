@@ -1,4 +1,4 @@
-package ch.duartesantos.opengym;
+package com.lianleme.app;
 
 import android.app.Notification;
 import android.app.Service;

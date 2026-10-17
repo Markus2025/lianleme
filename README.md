@@ -1,3 +1,9 @@
+# 练了么 (Lianleme)
+
+> 本仓库是 [openGym](https://github.com/DuarteSantos8/openGym) 的中文 fork（AGPL-3.0，基于 v1.4.1），保留原作者版权声明，全部修改开源。上游原 README 见下方。
+
+---
+
 <div align="center">
 
 <img src="assets/banner.png" alt="openGym" width="720">

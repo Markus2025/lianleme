@@ -1,4 +1,4 @@
-package ch.duartesantos.opengym;
+package com.lianleme.app;
 
 import static org.junit.Assert.*;
 
