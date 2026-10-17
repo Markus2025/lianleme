@@ -1329,7 +1329,7 @@ export default {
   'Scan': 'स्कैन करें',
   'Import photo': 'फ़ोटो इम्पोर्ट करें',
   'Label': 'लेबल',
-  'e.g. FitZone downtown': 'जैसे FitZone डाउनटाउन',
+  'e.g. Gym downtown': 'जैसे डाउनटाउन',
   'Code': 'कोड',
   'Membership number or code': 'मेंबरशिप नंबर या कोड',
   'Save card': 'कार्ड सहेजें',

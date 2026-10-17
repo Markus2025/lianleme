@@ -1329,7 +1329,7 @@ export default {
   'Scan': 'Skanuj',
   'Import photo': 'Importuj zdjęcie',
   'Label': 'Etykieta',
-  'e.g. FitZone downtown': 'np. FitZone centrum',
+  'e.g. Gym downtown': 'np. siłownia w centrum',
   'Code': 'Kod',
   'Membership number or code': 'Numer członkowski lub kod',
   'Save card': 'Zapisz kartę',

@@ -987,7 +987,7 @@ export default {
   'Scan': 'สแกน',
   'Import photo': 'นำเข้ารูปถ่าย',
   'Label': 'ป้ายชื่อ',
-  'e.g. FitZone downtown': 'เช่น FitZone ใจกลางเมือง',
+  'e.g. Gym downtown': 'เช่น ยิมใจกลางเมือง',
   'Code': 'รหัส',
   'Membership number or code': 'หมายเลขสมาชิกหรือรหัส',
   'Save card': 'บันทึกบัตร',

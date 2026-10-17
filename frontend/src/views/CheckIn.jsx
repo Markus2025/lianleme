@@ -242,7 +242,7 @@ function CardSheet({ close, card }) {
     </div>
 
     <label className="sect-t">{t('Label')}</label>
-    <TextField value={label} onChange={e => setLabel(e.target.value)} placeholder={t('e.g. FitZone downtown')} style={{ marginBottom: 16 }} />
+    <TextField value={label} onChange={e => setLabel(e.target.value)} placeholder={t('e.g. Gym downtown')} style={{ marginBottom: 16 }} />
 
     {value.trim() && <div className="ci-qr-plate" style={{ alignSelf: 'center', marginBottom: 16 }}><QrCanvas value={value.trim()} size={150} /></div>}
 

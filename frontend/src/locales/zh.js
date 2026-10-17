@@ -1329,7 +1329,7 @@ export default {
   'Scan': '扫描',
   'Import photo': '导入照片',
   'Label': '名称',
-  'e.g. FitZone downtown': '例如 FitZone 市中心店',
+  'e.g. Gym downtown': '例如：市中心健身房',
   'Code': '代码',
   'Membership number or code': '会员号或代码',
   'Save card': '保存卡片',

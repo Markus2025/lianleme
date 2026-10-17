@@ -1329,7 +1329,7 @@ export default {
   'Scan': 'Tara',
   'Import photo': 'Fotoğraf içe aktar',
   'Label': 'Etiket',
-  'e.g. FitZone downtown': 'örn. FitZone merkez',
+  'e.g. Gym downtown': 'örn. merkezdeki spor salonu',
   'Code': 'Kod',
   'Membership number or code': 'Üyelik numarası veya kodu',
   'Save card': 'Kartı kaydet',

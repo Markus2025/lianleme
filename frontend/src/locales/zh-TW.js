@@ -1318,7 +1318,7 @@ export default {
   'Scan': '相機掃描',
   'Import photo': '匯入照片',
   'Label': '卡片標籤名稱',
-  'e.g. FitZone downtown': '例如：World Gym 站前店',
+  'e.g. Gym downtown': '例如：站前健身房',
   'Code': '條碼卡號',
   'Membership number or code': '會員卡號或條碼編號',
   'Save card': '儲存卡片',

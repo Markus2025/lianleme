@@ -1349,7 +1349,7 @@ export default {
   'Scan': 'Scannen',
   'Import photo': 'Foto importieren',
   'Label': 'Bezeichnung',
-  'e.g. FitZone downtown': 'z. B. FitZone Zentrum',
+  'e.g. Gym downtown': 'z. B. Studio im Zentrum',
   'Code': 'Code',
   'Membership number or code': 'Mitgliedsnummer oder Code',
   'Save card': 'Karte speichern',

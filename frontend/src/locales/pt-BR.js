@@ -785,7 +785,7 @@ export const PT_BR_OVERRIDES = {
   'Add your gym card': 'Adicione seu cartão da academia',
   'Scan it, import a photo, or type the code by hand.': 'Escaneie, importe uma foto ou digite o código à mão.',
   'Scan': 'Escanear',
-  'e.g. FitZone downtown': 'ex. FitZone centro',
+  'e.g. Gym downtown': 'ex. academia do centro',
   'Gym card': 'Cartão da academia',
   'Enter the endpoint URL': 'Digite a URL do endpoint',
   'There’s no routine to review yet. Build one with at least two exercises first.': 'Ainda não há rotina para revisar. Crie primeiro uma com pelo menos dois exercícios.',

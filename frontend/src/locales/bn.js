@@ -1387,7 +1387,7 @@ export default {
   'Scan': 'স্ক্যান করুন',
   'Import photo': 'ছবি ইমপোর্ট করুন',
   'Label': 'লেবেল',
-  'e.g. FitZone downtown': 'যেমন FitZone ধানমন্ডি',
+  'e.g. Gym downtown': 'যেমন ধানমন্ডি',
   'Code': 'কোড',
   'Membership number or code': 'মেম্বারশিপ নম্বর বা কোড',
   'Save card': 'কার্ড সেভ করুন',

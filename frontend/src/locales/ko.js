@@ -1329,7 +1329,7 @@ export default {
   'Scan': '스캔',
   'Import photo': '사진 가져오기',
   'Label': '이름',
-  'e.g. FitZone downtown': '예: FitZone 시내점',
+  'e.g. Gym downtown': '예: 시내 헬스클럽',
   'Code': '코드',
   'Membership number or code': '회원 번호 또는 코드',
   'Save card': '카드 저장',

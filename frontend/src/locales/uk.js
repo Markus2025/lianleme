@@ -1121,7 +1121,7 @@ export default {
   'Scan': 'Сканувати',
   'Import photo': 'Імпортувати фото',
   'Label': 'Назва',
-  'e.g. FitZone downtown': 'напр. FitZone у центрі',
+  'e.g. Gym downtown': 'напр. зал у центрі',
   'Code': 'Код',
   'Membership number or code': 'Номер учасника або код',
   'Save card': 'Зберегти картку',

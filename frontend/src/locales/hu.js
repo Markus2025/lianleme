@@ -979,7 +979,7 @@ export default {
   'Scan': 'Beolvasás',
   'Import photo': 'Fotó importálása',
   'Label': 'Címke',
-  'e.g. FitZone downtown': 'pl. FitZone belváros',
+  'e.g. Gym downtown': 'pl. belváros',
   'Code': 'Kód',
   'Membership number or code': 'Tagsági szám vagy kód',
   'Save card': 'Kártya mentése',

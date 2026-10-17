@@ -1172,7 +1172,7 @@ export default {
   'Scan': 'مسح',
   'Import photo': 'استيراد صورة',
   'Label': 'التسمية',
-  'e.g. FitZone downtown': 'مثلًا فيت زون وسط المدينة',
+  'e.g. Gym downtown': 'مثلًا وسط المدينة',
   'Code': 'الرمز',
   'Membership number or code': 'رقم العضوية أو الرمز',
   'Save card': 'حفظ البطاقة',
