@@ -1,0 +1,7 @@
+{
+  "appid": "wxc404bb2578d678de",
+  "projectname": "lianleme",
+  "compileType": "miniprogram",
+  "setting": { "es6": true, "postcss": true, "minified": true, "urlCheck": false },
+  "libVersion": "3.0.0"
+}

@@ -1,0 +1,10 @@
+<view class="card">
+  <view class="h2">我的</view>
+  <view class="row"><text>会员状态</text><text class="acc">{{memberText}}</text></view>
+  <view class="row" bindtap="goHelp"><text>下载与安装帮助</text><text class="dim">›</text></view>
+  <view class="row"><text>联系我们</text><text class="dim">官网 app.goformoon.cn</text></view>
+</view>
+<view class="card">
+  <view class="h2">订单记录</view>
+  <view class="dim">购买开通后，订单将显示在这里。</view>
+</view>

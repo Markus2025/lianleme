@@ -1,0 +1,10 @@
+page { background: #0c0e12; color: #e8eaed; font-size: 30rpx; }
+.card { background: #161a21; border: 1rpx solid #2a313c; border-radius: 24rpx; padding: 36rpx 30rpx; margin: 24rpx; }
+.h1 { font-size: 48rpx; font-weight: 700; }
+.h2 { font-size: 36rpx; font-weight: 600; margin-bottom: 20rpx; }
+.dim { color: #9aa3b2; font-size: 26rpx; }
+.acc { color: #7ee2b8; }
+.btn { background: #7ee2b8; color: #06231a; font-weight: 700; border-radius: 20rpx; text-align: center; padding: 26rpx 0; margin-top: 30rpx; }
+.btn.ghost { background: transparent; color: #e8eaed; border: 1rpx solid #2a313c; font-weight: 500; }
+.row { display: flex; justify-content: space-between; padding: 14rpx 0; border-bottom: 1rpx dashed #2a313c; font-size: 28rpx; }
+.row:last-child { border-bottom: none; }

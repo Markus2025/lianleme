@@ -1,0 +1,17 @@
+<view class="hero">
+  <view class="logo">练<text class="logo-acc">了</text>么</view>
+  <view class="slogan">今天，练了么？</view>
+</view>
+<view class="card">
+  <view class="h2">干净好用的训练记录</view>
+  <view class="row"><text>组数 · 重量 · 休息计时</text><text class="acc">✓</text></view>
+  <view class="row"><text>体重围度 · 热力图 · 趋势</text><text class="acc">✓</text></view>
+  <view class="row"><text>数据云同步，换机不丢</text><text class="acc">✓</text></view>
+  <view class="row"><text>无广告 · 无订阅套路</text><text class="acc">✓</text></view>
+</view>
+<view class="card">
+  <view class="h2">下载 App</view>
+  <view class="dim">小程序无法直接安装 App，请用浏览器打开官网下载安卓安装包：</view>
+  <view class="url" bindtap="copyUrl">app.goformoon.cn（点击复制）</view>
+</view>
+<view class="btn" bindtap="goBuy">¥15 永久会员 · 点击开通</view>
