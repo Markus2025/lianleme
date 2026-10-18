@@ -1094,7 +1094,11 @@ function loginTarget(body) {
 }
 const acctKey = u => 'acct:' + u.id;
 const passkeyCount = u => db.creds.filter(c => c.userId === u.id).length;
-const publicUser = u => ({ id: u.id, name: u.name, admin: isAdmin(u) });
+// Membership: the paid tier (cloud sync). Absent or in the past = not a member. Sold per channel
+// (mini-program direct pay, sideload in-app pay, store IAP) and grantable by an admin; every
+// channel lands on the same field, so one account is a member everywhere it signs in.
+const memberUntil = u => (u.memberUntil && u.memberUntil > Date.now()) ? u.memberUntil : 0;
+const publicUser = u => ({ id: u.id, name: u.name, admin: isAdmin(u), member: memberUntil(u) });
 const POLICY_ERRORS = {
   'too-short': `the password needs at least ${MIN_LENGTH} characters`,
   'too-long': `the password can have at most ${MAX_LENGTH} characters`,
@@ -1957,7 +1961,7 @@ const routes = {
     if (!s) return json(res, 401, { error: 'not signed in' });
     const { user } = s;
     const renew = s.bearer && s.exp - Date.now() < SESSION_DAYS * 86400000 / 2;
-    json(res, 200, { user: { id: user.id, name: user.name, admin: isAdmin(user) }, ...(renew ? { token: makeSession(user) } : {}) });
+    json(res, 200, { user: { id: user.id, name: user.name, admin: isAdmin(user), member: memberUntil(user) }, ...(renew ? { token: makeSession(user) } : {}) });
   },
 
   'POST /api/register/options': async (req, res) => {
@@ -2531,6 +2535,31 @@ const routes = {
     saveDb();
     audit(req, 'admin.invite.revoke', { user: admin, msg: inv.code });
     json(res, 200, { ok: true });
+  },
+
+  // Grant / extend / revoke membership by profile name. days > 0 extends from the current expiry
+  // when still active (stacking grants never loses paid time), from now otherwise; days <= 0
+  // revokes. This is also the manual channel — comps, refunds, and sales closed outside the
+  // automated pay flows all land here.
+  'POST /api/admin/user/membership': async (req, res) => {
+    const admin = requireAdmin(req, res); if (!admin) return;
+    const body = await readBody(req);
+    const user = db.users.find(u => u.name === text(body.name).trim().slice(0, 40));
+    if (!user) return json(res, 404, { error: 'no such profile', code: 'name' });
+    const days = Math.floor(+body.days);
+    if (!Number.isFinite(days)) return json(res, 400, { error: 'days required', code: 'days' });
+    if (days > 0) {
+      const cur = memberUntil(user);
+      const base = cur > Date.now() ? cur : Date.now();
+      user.memberUntil = base + days * 86400000;
+      user.memberVia = text(body.via).slice(0, 20) || 'admin';
+    } else {
+      delete user.memberUntil;
+      delete user.memberVia;
+    }
+    saveDb();
+    audit(req, 'admin.membership', { user, msg: days > 0 ? `+${days}d → ${new Date(user.memberUntil).toISOString()}` : 'revoked' });
+    json(res, 200, { user: publicUser(user) });
   },
 
   /* ---------- activity log ---------- */
