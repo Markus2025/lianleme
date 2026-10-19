@@ -1,5 +1,10 @@
 {
-  "pages": ["pages/index/index", "pages/buy/buy", "pages/me/me", "pages/help/help"],
+  "pages": [
+    "pages/index/index",
+    "pages/buy/buy",
+    "pages/me/me",
+    "pages/help/help"
+  ],
   "window": {
     "navigationBarBackgroundColor": "#0c0e12",
     "navigationBarTitleText": "练了么",
@@ -13,9 +18,14 @@
     "backgroundColor": "#0c0e12",
     "borderStyle": "black",
     "list": [
-      { "pagePath": "pages/index/index", "text": "首页" },
-      { "pagePath": "pages/buy/buy", "text": "会员" },
-      { "pagePath": "pages/me/me", "text": "我的" }
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/me/me",
+        "text": "我的"
+      }
     ]
   },
   "style": "v2"
