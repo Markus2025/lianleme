@@ -950,6 +950,7 @@ setInterval(() => { AUTH_BURST.sweep(); ADDR_FAILS.sweep(); ACCOUNT_FAILS.sweep(
 const THROTTLED = {
   'POST /api/login/password': 'password', 'POST /api/login/password-reset': 'password',
   'POST /api/register/password': 'signup',
+  'POST /api/wx/session': 'password',
   'POST /api/account/password': 'password', 'DELETE /api/account/password': null,
   // Setting an e-mail only spends the budget and asks the address's e-mail pause; an address
   // already in use counts against it (see POST /api/account/email).
@@ -1333,6 +1334,48 @@ const passwordRoutes = {
     saveDb();
     audit(req, 'auth.register.ok', { user, msg: inv ? inv.code + ' · password' : 'password' });
     json(res, 200, { user: publicUser(user) }, { 'Set-Cookie': sessionCookie(user) });
+  },
+
+  // WeChat mini-program sign-in: the client sends its wx.login code, the server exchanges it for
+  // an openid via code2session (server-to-server; no domain whitelist involved) and maps it to an
+  // account. First-timers are provisioned without an invite on purpose: the mini program is the
+  // free entry channel — the paid tier is membership, not account creation. Renaming happens in
+  // the app's settings; the auto name is only a placeholder.
+  'POST /api/wx/session': async (req, res) => {
+    const WXA_APPID = process.env.WXA_APPID || '';
+    const WXA_SECRET = process.env.WXA_SECRET || '';
+    if (!WXA_APPID || !WXA_SECRET) return json(res, 503, { error: 'wx login not configured', code: 'wx-config' });
+    if (addressPaused(req, res, 'password')) return;
+    const body = await readBody(req);
+    const code = text(body.code).trim();
+    if (!code) return json(res, 400, { error: 'code required', code: 'code' });
+    let wx;
+    try {
+      const url = `https://api.weixin.qq.com/sns/jscode2session?appid=${encodeURIComponent(WXA_APPID)}&secret=${encodeURIComponent(WXA_SECRET)}&js_code=${encodeURIComponent(code)}&grant_type=authorization_code`;
+      const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      wx = await r.json();
+    } catch (e) {
+      return json(res, 502, { error: 'could not reach weixin', code: 'wx-upstream' });
+    }
+    if (!wx.openid) {
+      strikeAddress(req, 'password');
+      audit(req, 'auth.wx.denied', { ok: false, msg: wx.errcode || 'no-openid' });
+      return json(res, 401, { error: 'invalid wx code', code: 'wx-code' });
+    }
+    let user = db.users.find(u => u.wxa === wx.openid);
+    if (!user) {
+      const created = new Date().toISOString();
+      user = { id: crypto.randomBytes(12).toString('base64url'), name: 'wx_' + crypto.randomBytes(4).toString('hex'), created, wxa: wx.openid, ...(wx.unionid ? { wxu: wx.unionid } : {}) };
+      claimFirstAdmin(req, user);
+      db.users.push(user);
+      saveDb();
+      audit(req, 'auth.wx.register', { user });
+    } else {
+      audit(req, 'auth.wx.ok', { user });
+    }
+    // Bearer token in the body for clients that can't hold cookies (wx.request on real phones);
+    // the cookie stays for devtools and any browser caller.
+    json(res, 200, { user: publicUser(user), token: makeSession(user) }, { 'Set-Cookie': sessionCookie(user) });
   },
 
   // What Settings shows: whether a password is set, and whether it could be removed.
