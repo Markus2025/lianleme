@@ -950,7 +950,7 @@ setInterval(() => { AUTH_BURST.sweep(); ADDR_FAILS.sweep(); ACCOUNT_FAILS.sweep(
 const THROTTLED = {
   'POST /api/login/password': 'password', 'POST /api/login/password-reset': 'password',
   'POST /api/register/password': 'signup',
-  'POST /api/wx/session': 'password',
+  'POST /api/wx/session': 'password', 'POST /api/wx/bind': 'password',
   'POST /api/account/password': 'password', 'DELETE /api/account/password': null,
   // Setting an e-mail only spends the budget and asks the address's e-mail pause; an address
   // already in use counts against it (see POST /api/account/email).
@@ -1342,6 +1342,8 @@ const passwordRoutes = {
   // account. First-timers are provisioned without an invite on purpose: the mini program is the
   // free entry channel — the paid tier is membership, not account creation. Renaming happens in
   // the app's settings; the auto name is only a placeholder.
+  // wxUnionidOf: unionid only arrives with an open platform binding; the wx/session flow stores
+  // it directly on the user (wu), so this helper is just the account's stored value or nothing.
   'POST /api/wx/session': async (req, res) => {
     const WXA_APPID = process.env.WXA_APPID || '';
     const WXA_SECRET = process.env.WXA_SECRET || '';
@@ -1379,7 +1381,54 @@ const passwordRoutes = {
     json(res, 200, { user: publicUser(user), token: makeSession(user) }, { 'Set-Cookie': sessionCookie(user) });
   },
 
-  // What Settings shows: whether a password is set, and whether it could be removed.
+  // Bind an existing profile to a WeChat openid via a pairing code minted in the app's browser
+  // session (Settings → pair). The caller must already hold a wx session (the placeholder account
+  // wx login created); that account is retired if it has no real data — training history and
+  // membership all live on the paired-into profile, so the wx placeholder must never shadow it.
+  'POST /api/wx/bind': async (req, res) => {
+    const WXA_APPID = process.env.WXA_APPID || '';
+    const WXA_SECRET = process.env.WXA_SECRET || '';
+    if (!WXA_APPID || !WXA_SECRET) return json(res, 503, { error: 'wx login not configured', code: 'wx-config' });
+    const current = readSession(req);
+    if (!current) return json(res, 401, { error: 'not signed in' });
+    if (addressPaused(req, res, 'password')) return;
+    const body = await readBody(req);
+    const code = text(body.code).trim().toUpperCase();
+    const p = pairings.get(code);
+    if (p) pairings.delete(code);
+    if (!p || p.exp < Date.now()) {
+      strikeAddress(req, 'password');
+      auditFail(req, 'auth.wx.bind', { ok: false, msg: 'code-invalid' });
+      return json(res, 400, { error: 'invalid or expired code', code: 'pair-invalid' });
+    }
+    const target = db.users.find(u => u.id === p.uid);
+    if (!target || target.disabled) {
+      auditFail(req, 'auth.wx.bind', { ok: false, msg: 'user-unavailable' });
+      return json(res, 400, { error: 'invalid or expired code', code: 'pair-invalid' });
+    }
+    if (target.id === current.user.id) return json(res, 400, { error: 'already this profile', code: 'same' });
+    // Never let two profiles share one openid: a real prior binding on the target refuses the
+    // bind; the wx placeholder account we are signing in from gets retired below if it is empty.
+    if (target.wxa && target.wxa !== current.user.wxa) {
+      auditFail(req, 'auth.wx.bind', { ok: false, user: target, msg: 'already-bound' });
+      return json(res, 409, { error: 'this profile is already bound to another WeChat account', code: 'bound' });
+    }
+    target.wxa = current.user.wxa;
+    const uvid = current.user.wu;
+    if (uvid) target.wu = uvid;
+    // Retire the placeholder if it holds nothing but the auto name.
+    const empty = !Array.isArray(current.user.workouts) && (current.user.workouts === undefined || (current.user.workouts || []).length === 0);
+    const autoNamed = /^wx_[0-9a-f]{8}$/.test(current.user.name);
+    const hasState = fs.existsSync(path.join(DATA, `state-${current.user.id}.json`));
+    if (autoNamed && (empty || !hasState)) {
+      db.users = db.users.filter(u => u.id !== current.user.id);
+      try { fs.rmSync(path.join(DATA, `state-${current.user.id}.json`), { force: true }); } catch (e) { /* absent */ }
+      audit(req, 'auth.wx.bind.retire', { user: target, msg: current.user.id });
+    }
+    saveDb();
+    audit(req, 'auth.wx.bind', { user: target });
+    json(res, 200, { user: publicUser(target), token: makeSession(target) });
+  },
   'GET /api/account/password': async (req, res) => {
     const user = readSession(req);
     if (!user) return json(res, 401, { error: 'not signed in' });
