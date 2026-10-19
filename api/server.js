@@ -1280,7 +1280,8 @@ const passwordRoutes = {
       if (!still()) return json(res, 401, WRONG);
     }
     audit(req, 'auth.password.ok', { user });
-    json(res, 200, { user: publicUser(user) }, { 'Set-Cookie': sessionCookie(user) });
+    // Bearer token alongside the cookie, for cookie-less clients (the mini program's wx.request).
+    json(res, 200, { user: publicUser(user), token: makeSession(user) }, { 'Set-Cookie': sessionCookie(user) });
   },
 
   // For browsers that cannot make a passkey at all: plain http on a LAN address, some Firefox
@@ -1806,6 +1807,34 @@ const passkeyRoutes = {
 const MEDIA_LIMITS = mediaLimits(process.env);
 const MEDIA_ON = MEDIA_LIMITS.enabled;
 const MEDIA = createMediaStore({ dir: path.join(DATA, 'uploads'), limits: MEDIA_LIMITS, readState });
+
+// Exercise demo media, served per exercise id with a three-way fallback: our own generated
+// assets (ai/) first, then the licensed gymvisual clips (clip/), then a still image (still/).
+// The catalogue itself ships with the repo; a deployment that has none of these directories
+// simply answers 404 and the client falls back to its bundled placeholder. Lookups are cached
+// after the first scan — the catalogue is static between deployments.
+const CATALOGUE_MEDIA_DIRS = {
+  ai: process.env.CATALOGUE_AI_DIR && path.resolve(process.env.CATALOGUE_AI_DIR),
+  clip: process.env.CATALOGUE_CLIP_DIR && path.resolve(process.env.CATALOGUE_CLIP_DIR),
+  still: process.env.CATALOGUE_STILL_DIR && path.resolve(process.env.CATALOGUE_STILL_DIR),
+};
+const CATALOGUE_EXID_RE = /^[0-9]{4}$/;
+const catalogueMediaCache = new Map();
+function catalogueMediaFile(exId) {
+  if (!CATALOGUE_EXID_RE.test(exId)) return null;
+  if (catalogueMediaCache.has(exId)) return catalogueMediaCache.get(exId);
+  let found = null;
+  for (const [kind, dir] of Object.entries(CATALOGUE_MEDIA_DIRS)) {
+    if (!dir) continue;
+    for (const ext of (kind === 'ai' ? ['.mp4', '.webm'] : kind === 'clip' ? ['.mp4', '.gif'] : ['.png', '.jpg', '.webp'])) {
+      const f = path.join(dir, exId + ext);
+      try { if (fs.statSync(f).isFile()) { found = { file: f, type: kind === 'still' ? 'image/' + (ext === '.jpg' ? 'jpeg' : ext.slice(1)) : 'video/' + (ext === '.webm' ? 'webm' : 'mp4'), kind }; break; } } catch (e) { /* next */ }
+    }
+    if (found) break;
+  }
+  catalogueMediaCache.set(exId, found);
+  return found;
+}
 // Leftovers of uploads the previous process was receiving when it stopped.
 try { MEDIA.cleanTmp(); } catch (e) { console.error('media: boot cleanup failed', e.message); }
 // Per profile, not per address: every upload is signed in, and behind a proxy one address can be
@@ -1893,6 +1922,33 @@ const mediaRoutes = {
     const f = MEDIA.file(user.id, req.mediaHash);
     if (!f) throw new MediaError(404, 'media-missing');
     await sendMediaFile(res, f, req.mediaHash);
+  },
+  // Exercise demo media (video or still) by catalogue id. Signed in, because the animation set is
+  // licensed media and the app is the licensed surface; there is no public CDN by design. The
+  // client caches whatever it fetches, so repeat views cost the server nothing.
+  'GET /api/catalogue-media/{exId}': async (req, res) => {
+    const user = readSession(req);
+    if (!user) return json(res, 401, { error: 'not signed in' });
+    const hit = catalogueMediaFile(req.exId);
+    if (!hit) return json(res, 404, { error: 'no media for this exercise', code: 'ex-media-missing' });
+    let fd;
+    try { fd = fs.openSync(hit.file, 'r'); }
+    catch { catalogueMediaCache.delete(req.exId); return json(res, 404, { error: 'no media for this exercise', code: 'ex-media-missing' }); }
+    const size = fs.fstatSync(fd).size;
+    const range = req.headers.range;
+    const base = { 'Content-Type': hit.type, 'Accept-Ranges': 'bytes', 'Cache-Control': 'public, max-age=604800, immutable' };
+    if (range) {
+      const m = /^bytes=(\d*)-(\d*)$/.exec(range);
+      let start = m && m[1] ? +m[1] : 0;
+      let end = m && m[2] ? Math.min(+m[2], size - 1) : size - 1;
+      if (isNaN(start) || start > end || start >= size) { res.writeHead(416, { 'Content-Range': `bytes */${size}` }); res.end(); return; }
+      res.writeHead(206, { ...base, 'Content-Range': `bytes ${start}-${end}/${size}`, 'Content-Length': end - start + 1 });
+      const stream = fs.createReadStream(hit.file, { fd, start, end });
+      stream.pipe(res);
+      return;
+    }
+    res.writeHead(200, { ...base, 'Content-Length': size });
+    fs.createReadStream(null, { fd, autoClose: true }).pipe(res);
   },
   // Which of these the server does not have, so a device uploads only those. Answered from the
   // in-memory list of the caller's own folder.
@@ -2144,7 +2200,8 @@ const routes = {
       return json(res, 403, { error: 'this account has been disabled', code: 'disabled' });
     }
     audit(req, 'auth.login.ok', { user });
-    json(res, 200, { user: { id: user.id, name: user.name, admin: isAdmin(user) } }, { 'Set-Cookie': sessionCookie(user) });
+    // Bearer token alongside the cookie, for cookie-less clients (the mini program's wx.request).
+    json(res, 200, { user: { id: user.id, name: user.name, admin: isAdmin(user), member: memberUntil(user) }, token: makeSession(user) }, { 'Set-Cookie': sessionCookie(user) });
   },
 
   // Reads the session purely so the sign-out can be recorded; the cookie is cleared either way.
@@ -2730,6 +2787,8 @@ const server = http.createServer(async (req, res) => {
   // above stays a plain lookup, and so csrfOk and the catch-all see one name for every file.
   const mm = /^\/api\/media\/([0-9a-f]{64})$/.exec(url.pathname);
   if (mm) { key = req.method + ' /api/media/{hash}'; req.mediaHash = mm[1]; }
+  const xm = /^\/api\/catalogue-media\/([0-9]{4})$/.exec(url.pathname);
+  if (xm) { key = req.method + ' /api/catalogue-media/{exId}'; req.exId = xm[1]; }
   const handler = routes[key];
   if (!handler) return json(res, 404, { error: 'not found' });
   if (!csrfOk(req, key)) {
