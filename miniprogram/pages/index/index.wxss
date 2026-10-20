@@ -1,6 +1,0 @@
-.hero { text-align: center; padding: 90rpx 0 40rpx; }
-.logo { font-size: 88rpx; font-weight: 800; letter-spacing: 6rpx; }
-.logo-acc { color: #7ee2b8; }
-.slogan { color: #9aa3b2; margin-top: 14rpx; }
-.url { color: #7ee2b8; text-align: center; margin-top: 18rpx; font-size: 34rpx; font-weight: 600; }
-.btn { margin: 30rpx 24rpx 60rpx; }
